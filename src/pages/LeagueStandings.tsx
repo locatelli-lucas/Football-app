@@ -4,6 +4,8 @@ import { Standings, Table } from "../components/Table";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Select } from "../components/Select";
+import { useLoading } from "../context/LoadingContext";
+import { Spinner } from "../components/Spinner";
 
 interface League {
     name: string;
@@ -20,17 +22,22 @@ export function LeagueStandings() {
     const [seasons, setSeasons] = useState<string[]>([])
     const [selectedSeason, setSelectedSeason] = useState<string>("")
 
+    const {isLoading, setLoadingState} = useLoading();
+
     const {leagueId} = useParams();
 
     const getStandingsByLeague = async () => {
+        setLoadingState(true);
         const response = leagueId && await getLeagueStandings(leagueId, parseInt(selectedSeason), 'asc');
         setLeague(response.data);
+        setLoadingState(false);
     }
 
     const getSeasonsByLeague = async () => {
+        setLoadingState(true);
         const response = leagueId && (await getLeagueSeasons(leagueId));
         setSeasons(response.data.seasons.map((item: Season) => item.year))
-
+        setLoadingState(false);
     }
 
     const handleChangeSelectedSeason = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -66,7 +73,11 @@ export function LeagueStandings() {
                     <Select options={seasons} onChange={handleChangeSelectedSeason}/>
                 </div>
                 <hr className="mt-4"/>
-                {league && <Table standings={league.standings}/>}
+                {isLoading? (
+                    <div className="my-10 flex justify-center items-center">
+                        <Spinner />
+                    </div>
+                ) : league && <Table standings={league?.standings}/>}
             </section>
         </main>
     )
